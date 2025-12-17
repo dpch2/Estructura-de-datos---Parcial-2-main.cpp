@@ -3,7 +3,38 @@
 #include <cmath>
 #include <cstdlib>
 #include <ctime>
+#include <limits>
 using namespace std;
+
+// Función para validar entrada de enteros positivos
+int leerEnteroPositivo(const char* mensaje) {
+    int valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            if (valor > 0) {
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                return valor;
+            } else {
+                cout << "Error: Debe ingresar un numero entero positivo mayor que 0." << endl;
+            }
+        } else {
+            cout << "Error: Entrada invalida. Debe ingresar un numero entero." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+// Función para validar que n <= m
+void validarRelacionNM(int &n, int &m) {
+    while (n > m) {
+        cout << "Error: n debe ser <= m" << endl;
+        cout << "\nIngrese los valores nuevamente:" << endl;
+        n = leerEnteroPositivo("Ingrese n (tamaño del arreglo E): ");
+        m = leerEnteroPositivo("Ingrese m (tamaño del conjunto S): ");
+    }
+}
 
 // Búsqueda binaria que cuenta comparaciones
 int busquedaBinaria(int E[], int inicio, int fin, int K, int &comparaciones) {
@@ -30,17 +61,13 @@ int busquedaBinaria(int E[], int inicio, int fin, int K, int &comparaciones) {
 int main() {
     srand(time(0));
     
-    // Parámetros
+    // Parámetros con validación
     int n, m;
-    cout << "Ingrese n (tamaño del arreglo E): ";
-    cin >> n;
-    cout << "Ingrese m (tamaño del conjunto S): ";
-    cin >> m;
+    n = leerEnteroPositivo("Ingrese n (tamaño del arreglo E): ");
+    m = leerEnteroPositivo("Ingrese m (tamaño del conjunto S): ");
     
-    if (n > m) {
-        cout << "Error: n debe ser <= m" << endl;
-        return 1;
-    }
+    // Validar que n <= m
+    validarRelacionNM(n, m);
     
     // Crear arreglo E con n elementos ordenados
     int *E = new int[n];
@@ -75,8 +102,8 @@ int main() {
     cout << "\n=== RESULTADOS ===" << endl;
     cout << "n = " << n << ", m = " << m << endl;
     cout << "\nPromedio experimental de comparaciones: " << promedioExperimental << endl;
-    cout << "Promedio teórico (⌊log₂(n)⌋ + 1): " << promedioTeorico << endl;
-    cout << "\nFórmula: C(n,m) = ⌊log₂(" << n << ")⌋ + 1 = " << promedioTeorico << endl;
+    cout << "Promedio teorico (⌊log₂(n)⌋ + 1): " << promedioTeorico << endl;
+    cout << "\nFormula: C(n,m) = ⌊log₂(" << n << ")⌋ + 1 = " << promedioTeorico << endl;
     
     // Liberar memoria
     delete[] E;

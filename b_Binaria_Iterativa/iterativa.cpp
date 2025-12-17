@@ -1,6 +1,53 @@
 //EJERCICIO 1
 #include <iostream>
+#include <limits>
 using namespace std;
+
+// Función para validar entrada de enteros positivos
+int leerEnteroPositivo(const char* mensaje) {
+    int valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            if (valor > 0) {
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                return valor;
+            } else {
+                cout << "Error: Debe ingresar un numero entero positivo mayor que 0." << endl;
+            }
+        } else {
+            cout << "Error: Entrada invalida. Debe ingresar un numero entero." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+// Función para leer cualquier entero (puede ser negativo)
+int leerEntero(const char* mensaje) {
+    int valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return valor;
+        } else {
+            cout << "Error: Entrada invalida. Debe ingresar un numero entero." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+// Función para validar que el arreglo esté ordenado ascendentemente
+bool validarOrdenAscendente(int v[], int n) {
+    for (int i = 0; i < n - 1; i++) {
+        if (v[i] > v[i + 1]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 // Función de búsqueda binaria
 int busquedaBinaria(int v[], int n, int nbus) {
@@ -52,15 +99,26 @@ int main() {
     int n, nbus;
     
     cout << "=== BÚSQUEDA BINARIA ===" << endl;
-    cout << "Ingrese el tamaño del arreglo: ";
-    cin >> n;
+    n = leerEnteroPositivo("Ingrese el tamaño del arreglo: ");
     
-    int v[n];
+    int *v = new int[n];
     
-    cout << "\nIngrese " << n << " números ORDENADOS de forma ASCENDENTE:" << endl;
-    for (int i = 0; i < n; i++) {
-        cout << "v[" << i << "] = ";
-        cin >> v[i];
+    bool ordenCorrecto = false;
+    while (!ordenCorrecto) {
+        cout << "\nIngrese " << n << " números ORDENADOS de forma ASCENDENTE:" << endl;
+        for (int i = 0; i < n; i++) {
+            char mensaje[50];
+            sprintf(mensaje, "v[%d] = ", i);
+            v[i] = leerEntero(mensaje);
+        }
+        
+        // Validar que el arreglo esté ordenado
+        if (validarOrdenAscendente(v, n)) {
+            ordenCorrecto = true;
+        } else {
+            cout << "\nError: El arreglo NO está ordenado de forma ascendente." << endl;
+            cout << "Por favor, ingrese los números nuevamente en orden ascendente." << endl;
+        }
     }
     
     cout << "\nArreglo ingresado: { ";
@@ -70,8 +128,7 @@ int main() {
     }
     cout << " }" << endl;
     
-    cout << "\nIngrese el numero a buscar: ";
-    cin >> nbus;
+    nbus = leerEntero("\nIngrese el numero a buscar: ");
     
     int resultado = busquedaBinaria(v, n, nbus);
     
@@ -81,6 +138,8 @@ int main() {
     } else {
         cout << "El número " << nbus << " NO se encuentra en el arreglo." << endl;
     }
+    
+    delete[] v;
     
     return 0;
 }

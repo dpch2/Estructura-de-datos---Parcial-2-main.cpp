@@ -1,5 +1,7 @@
 // EJERCICIO 5
 #include <iostream>
+#include <cctype>
+#include <cstring>
 using namespace std;
 
 const int TAM = 10;
@@ -37,8 +39,107 @@ void mostrar() {
     cout << "===========================\n";
 }
 
+// ========== VALIDACIONES AGREGADAS ==========
+
+// Función para validar y leer un número entero
+bool leerEntero(int &valor) {
+    char buffer[100];
+    bool valido = false;
+    
+    while(!valido) {
+        cin.getline(buffer, 100);
+        
+        // Verificar que no esté vacío
+        if(strlen(buffer) == 0) {
+            cout << "ERROR: No puede estar vacio. Ingrese un numero: ";
+            continue;
+        }
+        
+        // Verificar que todos los caracteres sean dígitos (o signo negativo al inicio)
+        bool esNumero = true;
+        int inicio = 0;
+        
+        // Permitir signo negativo al inicio
+        if(buffer[0] == '-') {
+            inicio = 1;
+            if(strlen(buffer) == 1) {
+                esNumero = false;
+            }
+        }
+        
+        for(int i = inicio; buffer[i] != '\0'; i++) {
+            if(!isdigit(buffer[i])) {
+                esNumero = false;
+                break;
+            }
+        }
+        
+        if(!esNumero) {
+            cout << "ERROR: Debe ingresar solo numeros enteros. Intente nuevamente: ";
+            continue;
+        }
+        
+        // Convertir string a entero
+        valor = 0;
+        int signo = 1;
+        inicio = 0;
+        
+        if(buffer[0] == '-') {
+            signo = -1;
+            inicio = 1;
+        }
+        
+        for(int i = inicio; buffer[i] != '\0'; i++) {
+            valor = valor * 10 + (buffer[i] - '0');
+        }
+        valor *= signo;
+        
+        valido = true;
+    }
+    
+    return true;
+}
+
+// Función para validar opción del menú
+bool leerOpcionMenu(int &opcion) {
+    char buffer[100];
+    bool valido = false;
+    
+    while(!valido) {
+        cin.getline(buffer, 100);
+        
+        // Verificar que no esté vacío
+        if(strlen(buffer) == 0) {
+            cout << "ERROR: Debe ingresar una opcion. Intente nuevamente: ";
+            continue;
+        }
+        
+        // Verificar que sea un solo dígito entre 0-4
+        if(strlen(buffer) == 1 && isdigit(buffer[0])) {
+            opcion = buffer[0] - '0';
+            if(opcion >= 0 && opcion <= 4) {
+                valido = true;
+            } else {
+                cout << "ERROR: Opcion invalida. Debe ser entre 0 y 4. Intente nuevamente: ";
+            }
+        } else {
+            cout << "ERROR: Debe ingresar un numero entre 0 y 4. Intente nuevamente: ";
+        }
+    }
+    
+    return true;
+}
+
+// ========== FIN VALIDACIONES ==========
+
 // INSERTAR con sondeo lineal
 bool insertar(int clave) {
+    // VALIDACION AGREGADA: no permitir valores reservados
+    if(clave == VACIO || clave == BORRADO) {
+        cout << "\nERROR: No se pueden insertar los valores " << VACIO << " o " << BORRADO << " (reservados del sistema)\n";
+        return false;
+    }
+    
     int pos = funcionHash(clave);
     int posInicial = pos;
     int intentos = 0;
@@ -72,6 +173,12 @@ bool insertar(int clave) {
 
 // BUSCAR con sondeo lineal
 int buscar(int clave) {
+    // VALIDACION AGREGADA: no buscar valores reservados
+    if(clave == VACIO || clave == BORRADO) {
+        cout << "\nERROR: No se pueden buscar los valores " << VACIO << " o " << BORRADO << " (reservados del sistema)\n";
+        return -1;
+    }
+    
     int pos = funcionHash(clave);
     int posInicial = pos;
     int intentos = 0;
@@ -112,6 +219,12 @@ int buscar(int clave) {
 
 // BORRAR con sondeo lineal
 bool borrar(int clave) {
+    // VALIDACION AGREGADA: no borrar valores reservados
+    if(clave == VACIO || clave == BORRADO) {
+        cout << "\nERROR: No se pueden borrar los valores " << VACIO << " o " << BORRADO << " (reservados del sistema)\n";
+        return false;
+    }
+    
     int pos = funcionHash(clave);
     int posInicial = pos;
     int intentos = 0;
@@ -163,23 +276,23 @@ int main() {
         cout << "4. Mostrar tabla\n";
         cout << "0. Salir\n";
         cout << "Opcion: ";
-        cin >> opcion;
+        leerOpcionMenu(opcion); // VALIDACION AGREGADA
         
         switch(opcion) {
             case 1:
                 cout << "Ingrese clave a insertar: ";
-                cin >> clave;
+                leerEntero(clave); // VALIDACION AGREGADA
                 insertar(clave);
                 mostrar();
                 break;
             case 2:
                 cout << "Ingrese clave a buscar: ";
-                cin >> clave;
+                leerEntero(clave); // VALIDACION AGREGADA
                 buscar(clave);
                 break;
             case 3:
                 cout << "Ingrese clave a borrar: ";
-                cin >> clave;
+                leerEntero(clave); // VALIDACION AGREGADA
                 borrar(clave);
                 mostrar();
                 break;
