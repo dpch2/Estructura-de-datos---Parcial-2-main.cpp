@@ -1,152 +1,134 @@
-//EJERCICIO 8
 #include <iostream>
 #include <string>
+#include <limits>
+#include <iomanip> // Para formato de decimales en el precio
+
 using namespace std;
+
+// --- FUNCIONES DE VALIDACION ---
+int leerEntero(string mensaje) {
+    int valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return valor;
+        } else {
+            cout << " [!] Error: Ingrese un numero entero.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+float leerFloat(string mensaje) {
+    float valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            return valor;
+        } else {
+            cout << " [!] Error: Ingrese un precio valido.\n";
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    }
+}
+
+void dibujarCabecera(string titulo) {
+    cout << "\n====================================================" << endl;
+    cout << "          " << titulo << endl;
+    cout << "====================================================" << endl;
+}
 
 int main() {
     int cantidad;
-    
-    cout << "Cuantos Funko Pop vas a ingresar? ";
-    cin >> cantidad;
-    
-    // 4 arrays simples
+    dibujarCabecera("GESTOR DE COLECCION FUNKO POP");
+    cantidad = leerEntero(" > Cuantos Funko Pop vas a ingresar? ");
+
     int numero[100];
     string nombre[100];
     string coleccion[100];
     float precio[100];
-    
-    // INGRESAR DATOS
+
+    // 1. INGRESO DE DATOS
     for(int i = 0; i < cantidad; i++) {
-        cout << "\n--- Funko " << (i+1) << " ---" << endl;
-        cout << "Numero: ";
-        cin >> numero[i];
-        cin.ignore();
-        cout << "Nombre: ";
+        cout << "\n[ Registro #" << (i+1) << " ]" << endl;
+        numero[i] = leerEntero(" -> Numero de serie: ");
+        cout << " -> Nombre del personaje: ";
         getline(cin, nombre[i]);
-        cout << "Coleccion: ";
+        cout << " -> Coleccion (ej. Star Wars, Marvel): ";
         getline(cin, coleccion[i]);
-        cout << "Precio: ";
-        cin >> precio[i];
+        precio[i] = leerFloat(" -> Precio: $");
     }
-    
-    // A) ORDENAR POR NUMERO
-    cout << "\n\n--- A) ORDENADOS POR NUMERO ---" << endl;
-    for(int i = 0; i < cantidad; i++) {
-        for(int j = i+1; j < cantidad; j++) {
-            if(numero[i] > numero[j]) {
-                // cambiar numero
-                int temp1 = numero[i];
-                numero[i] = numero[j];
-                numero[j] = temp1;
-                
-                // cambiar nombre
-                string temp2 = nombre[i];
-                nombre[i] = nombre[j];
-                nombre[j] = temp2;
-                
-                // cambiar coleccion
-                string temp3 = coleccion[i];
-                coleccion[i] = coleccion[j];
-                coleccion[j] = temp3;
-                
-                // cambiar precio
-                float temp4 = precio[i];
-                precio[i] = precio[j];
-                precio[j] = temp4;
+
+    // 2. ORDENAMIENTO (Bubble Sort por Numero)
+    for(int i = 0; i < cantidad - 1; i++) {
+        for(int j = 0; j < cantidad - i - 1; j++) {
+            if(numero[j] > numero[j+1]) {
+                // Intercambio sincronizado de los 4 arreglos
+                swap(numero[j], numero[j+1]);
+                swap(nombre[j], nombre[j+1]);
+                swap(coleccion[j], coleccion[j+1]);
+                swap(precio[j], precio[j+1]);
             }
         }
     }
-    
+
+    // 3. REPORTES
+    dibujarCabecera("A) INVENTARIO ORDENADO POR SERIE");
+    cout << "No.\t| NOMBRE\t\t| COLECCION\t| PRECIO" << endl;
+    cout << "----------------------------------------------------" << endl;
     for(int i = 0; i < cantidad; i++) {
-        cout << numero[i] << " - " << nombre[i] << " - " << coleccion[i] << " - $" << precio[i] << endl;
+        cout << " #" << numero[i] << "\t| " << nombre[i] << (nombre[i].length() < 8 ? "\t\t| " : "\t| ") 
+             << coleccion[i] << "\t| $" << fixed << setprecision(2) << precio[i] << endl;
     }
-    
-    // B) BUSCAR POR COLECCION
-    cout << "\n\n--- B) BUSCAR POR COLECCION ---" << endl;
+
+    dibujarCabecera("B) BUSQUEDA POR COLECCION");
     string buscar;
-    cin.ignore();
-    cout << "Que coleccion quieres buscar? ";
+    cout << " > Ingrese coleccion a filtrar: ";
     getline(cin, buscar);
-    
     for(int i = 0; i < cantidad; i++) {
         if(coleccion[i] == buscar) {
-            cout << numero[i] << " - " << nombre[i] << " - $" << precio[i] << endl;
+            cout << " [+] " << nombre[i] << " (#" << numero[i] << ") - $" << precio[i] << endl;
         }
     }
-    
-    // C) BUSCAR NUMERO 130 DE STAR WARS
-    cout << "\n\n--- C) BUSCAR NUMERO 130 DE STAR WARS ---" << endl;
+
+    dibujarCabecera("C al G) FILTROS ESPECIFICOS");
+    float sumaIronMan = 0;
     for(int i = 0; i < cantidad; i++) {
-        if(numero[i] == 130 && coleccion[i] == "Star Wars") {
-            cout << "SI EXISTE!" << endl;
-            cout << "Nombre: " << nombre[i] << endl;
-            cout << "Precio: $" << precio[i] << endl;
+        // C) Star Wars 130
+        if(numero[i] == 130 && coleccion[i] == "Star Wars") 
+            cout << " [!] EXISTE: " << nombre[i] << " de Star Wars (#130)" << endl;
+        
+        // D) Numero 295
+        if(numero[i] == 295) 
+            cout << " [!] NUMERO 295: " << nombre[i] << " (" << coleccion[i] << ")" << endl;
+            
+        // E/F) Personajes Iconicos
+        if(nombre[i] == "Darth Vader" || nombre[i] == "Capitana Marvel" || 
+           nombre[i] == "Red Skull" || nombre[i] == "Thanos" || nombre[i] == "Galactus") {
+            cout << " [!] ICONO ENCONTRADO: " << nombre[i] << " (#" << numero[i] << ")" << endl;
         }
-    }
-    
-    // D) BUSCAR TODOS LOS NUMERO 295
-    cout << "\n\n--- D) TODOS LOS NUMERO 295 ---" << endl;
-    for(int i = 0; i < cantidad; i++) {
-        if(numero[i] == 295) {
-            cout << nombre[i] << " - " << coleccion[i] << " - $" << precio[i] << endl;
-        }
-    }
-    
-    // E) BUSCAR DARTH VADER Y CAPITANA MARVEL
-    cout << "\n\n--- E) DARTH VADER Y CAPITANA MARVEL ---" << endl;
-    for(int i = 0; i < cantidad; i++) {
-        if(nombre[i] == "Darth Vader" || nombre[i] == "Capitana Marvel") {
-            cout << numero[i] << " - " << nombre[i] << " - " << coleccion[i] << " - $" << precio[i] << endl;
-        }
-    }
-    
-    // F) BUSCAR RED SKULL, THANOS Y GALACTUS
-    cout << "\n\n--- F) RED SKULL, THANOS Y GALACTUS ---" << endl;
-    for(int i = 0; i < cantidad; i++) {
-        if(nombre[i] == "Red Skull" || nombre[i] == "Thanos" || nombre[i] == "Galactus") {
-            cout << nombre[i] << " - " << numero[i] << " - " << coleccion[i] << " - $" << precio[i] << endl;
-        }
-    }
-    
-    // G) SUMAR PRECIOS DE TONY STARK E IRON MAN
-    cout << "\n\n--- G) COSTO TONY STARK E IRON MAN ---" << endl;
-    float suma = 0;
-    for(int i = 0; i < cantidad; i++) {
+
+        // G) Suma Tony Stark/Iron Man
         if(nombre[i] == "Tony Stark" || nombre[i] == "Iron Man") {
-            cout << nombre[i] << " - $" << precio[i] << endl;
-            suma = suma + precio[i];
+            sumaIronMan += precio[i];
         }
     }
-    cout << "TOTAL: $" << suma << endl;
-    
-    // H) CALCULAR PROMEDIOS
-    cout << "\n\n--- H) PROMEDIOS Y TOTALES ---" << endl;
-    
-    // Promedio de TODOS
-    float todosSuma = 0;
+    cout << " >> Costo total Tony Stark + Iron Man: $" << sumaIronMan << endl;
+
+    dibujarCabecera("H) ANALISIS DE COSTOS");
+    float todosSuma = 0, rocksTotal = 0, hpTotal = 0;
     for(int i = 0; i < cantidad; i++) {
-        todosSuma = todosSuma + precio[i];
+        todosSuma += precio[i];
+        if(coleccion[i] == "Rocks") rocksTotal += precio[i];
+        if(coleccion[i] == "Harry Potter") hpTotal += precio[i];
     }
-    float promedio = todosSuma / cantidad;
-    cout << "Promedio de todos: $" << promedio << endl;
-    
-    // Total de ROCKS
-    float rocksTotal = 0;
-    for(int i = 0; i < cantidad; i++) {
-        if(coleccion[i] == "Rocks") {
-            rocksTotal = rocksTotal + precio[i];
-        }
-    }
-    cout << "Total Rocks: $" << rocksTotal << endl;
-    
-    // Total de HARRY POTTER
-    float hpTotal = 0;
-    for(int i = 0; i < cantidad; i++) {
-        if(coleccion[i] == "Harry Potter") {
-            hpTotal = hpTotal + precio[i];
-        }
-    }
-    cout << "Total Harry Potter: $" << hpTotal << endl;
-    
+    cout << " -> Promedio general de la coleccion: $" << (cantidad > 0 ? todosSuma/cantidad : 0) << endl;
+    cout << " -> Inversion total en 'Rocks': $" << rocksTotal << endl;
+    cout << " -> Inversion total en 'Harry Potter': $" << hpTotal << endl;
+
     return 0;
 }

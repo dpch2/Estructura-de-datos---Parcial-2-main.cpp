@@ -1,260 +1,99 @@
 #include <iostream>
+#include <limits>
+#include <algorithm> // Para usar la funcion max
+
 using namespace std;
 
-const int MAX_NODOS = 100;
+// --- ESTRUCTURA DEL NODO ---
+class Nodo {
+public:
+    int dato;
+    Nodo *izq, *der;
+    Nodo(int valor) : dato(valor), izq(nullptr), der(nullptr) {}
+};
 
-// Arrays paralelos para representar el arbol
-int valores[MAX_NODOS];
-int izq[MAX_NODOS];
-int der[MAX_NODOS];
-int numNodos = 0;
-int raiz = -1;
+// --- CLASE ARBOL CON FUNCION RECURSIVA DE ALTURA ---
+class Arbol {
+public:
+    Nodo* raiz;
+    Arbol() : raiz(nullptr) {}
 
-// Funcion para crear un nuevo nodo
-int crearNodo(int valor) {
-    if (numNodos >= MAX_NODOS) {
-        cout << "Error: Arbol lleno" << endl;
-        return -1;
+    void insertar(int v) {
+        Nodo* nuevo = new Nodo(v);
+        if (!raiz) { raiz = nuevo; return; }
+        Nodo *curr = raiz, *padre = nullptr;
+        while (curr) {
+            padre = curr;
+            if (v < curr->dato) curr = curr->izq;
+            else curr = curr->der;
+        }
+        if (v < padre->dato) padre->izq = nuevo;
+        else padre->der = nuevo;
     }
-    int idx = numNodos++;
-    valores[idx] = valor;
-    izq[idx] = -1;
-    der[idx] = -1;
-    return idx;
-}
 
-// Funcion para obtener el maximo de dos numeros
-int maximo(int a, int b) {
-    return (a > b) ? a : b;
-}
-
-// *** FUNCION RECURSIVA PARA CALCULAR LA ALTURA ***
-int calcularAltura(int nodo) {
-    // Caso base: arbol vacio tiene altura -1
-    // (algunos autores usan 0, aqui usamos -1 para que un nodo hoja tenga altura 0)
-    if (nodo == -1) {
-        return -1;
-    }
-    
-    // Caso recursivo: altura = 1 + max(altura_izq, altura_der)
-    int alturaIzq = calcularAltura(izq[nodo]);
-    int alturaDer = calcularAltura(der[nodo]);
-    
-    return 1 + maximo(alturaIzq, alturaDer);
-}
-
-// Funcion recursiva auxiliar para mostrar el proceso
-int calcularAlturaConProceso(int nodo, int nivel) {
-    if (nodo == -1) {
-        return -1;
-    }
-    
-    // Mostrar el proceso
-    for (int i = 0; i < nivel; i++) cout << "  ";
-    cout << "-> Nodo " << valores[nodo] << " (nivel " << nivel << ")" << endl;
-    
-    int alturaIzq = calcularAlturaConProceso(izq[nodo], nivel + 1);
-    int alturaDer = calcularAlturaConProceso(der[nodo], nivel + 1);
-    
-    int alturaActual = 1 + maximo(alturaIzq, alturaDer);
-    
-    for (int i = 0; i < nivel; i++) cout << "  ";
-    cout << "<- Altura del nodo " << valores[nodo] << " = " << alturaActual << endl;
-    
-    return alturaActual;
-}
-
-// Insertar nodo en arbol binario de busqueda
-void insertar(int valor) {
-    int nuevo = crearNodo(valor);
-    if (nuevo == -1) return;
-    
-    if (raiz == -1) {
-        raiz = nuevo;
-        cout << "Raiz: " << valor << endl;
-        return;
-    }
-    
-    int actual = raiz;
-    int padre = -1;
-    
-    while (actual != -1) {
-        padre = actual;
-        if (valor < valores[actual]) {
-            actual = izq[actual];
-        } else if (valor > valores[actual]) {
-            actual = der[actual];
+    // --- FUNCION RECURSIVA PARA LA ALTURA ---
+    int calcularAltura(Nodo* nodo) {
+        if (nodo == nullptr) {
+            return 0; // Caso base: arbol vacio o llegamos al final
         } else {
-            numNodos--;
-            cout << "Valor duplicado, no se inserta" << endl;
-            return;
+            // Calcular la altura de cada subarbol
+            int alturaIzq = calcularAltura(nodo->izq);
+            int alturaDer = calcularAltura(nodo->der);
+
+            // Retornar la altura mayor mas 1 (el nodo actual)
+            return 1 + max(alturaIzq, alturaDer);
         }
     }
-    
-    if (valor < valores[padre]) {
-        izq[padre] = nuevo;
-        cout << valor << " insertado a la izquierda de " << valores[padre] << endl;
-    } else {
-        der[padre] = nuevo;
-        cout << valor << " insertado a la derecha de " << valores[padre] << endl;
-    }
-}
 
-// Imprimir arbol visual - SOLO ASCII
-void imprimirArbol(int nodo, string prefijo, bool esUltimo) {
-    if (nodo == -1) return;
-    
-    cout << prefijo;
-    
-    if (esUltimo) {
-        cout << "+-- ";
-        prefijo += "    ";
-    } else {
-        cout << "+-- ";
-        prefijo += "|   ";
+    void mostrarEstructura(Nodo* n, int h) {
+        if (!n) return;
+        mostrarEstructura(n->der, h + 1);
+        for (int i = 0; i < h; i++) cout << "      ";
+        cout << "--(" << n->dato << ")" << endl;
+        mostrarEstructura(n->izq, h + 1);
     }
-    
-    cout << valores[nodo] << endl;
-    
-    // Contar hijos existentes
-    bool tieneIzq = (izq[nodo] != -1);
-    bool tieneDer = (der[nodo] != -1);
-    
-    if (tieneIzq) {
-        imprimirArbol(izq[nodo], prefijo, !tieneDer);
-    }
-    if (tieneDer) {
-        imprimirArbol(der[nodo], prefijo, true);
-    }
-}
+};
 
-// Contar nodos (recursivo)
-int contarNodos(int nodo) {
-    if (nodo == -1) return 0;
-    return 1 + contarNodos(izq[nodo]) + contarNodos(der[nodo]);
-}
-
-// Validar entrada numerica
-bool validarEntrada(int &valor) {
-    if (cin >> valor) {
-        return true;
-    } else {
+int leerEntero() {
+    int x;
+    while (!(cin >> x)) {
+        cout << " >> Error: Ingrese un numero: ";
         cin.clear();
-        cin.ignore(10000, '\n');
-        return false;
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
+    return x;
 }
 
 int main() {
-    cout << "================================================" << endl;
-    cout << "  CALCULO DE ALTURA DE ARBOL BINARIO (RECURSIVO)" << endl;
-    cout << "================================================" << endl;
-    
-    int opcion;
-    
+    Arbol t;
+    int op;
+
     do {
-        cout << "\n--- MENU ---" << endl;
-        cout << "1. Insertar nodo" << endl;
-        cout << "2. Calcular altura (simple)" << endl;
-        cout << "3. Calcular altura (con proceso)" << endl;
-        cout << "4. Mostrar arbol" << endl;
-        cout << "5. Ejemplo predefinido" << endl;
-        cout << "0. Salir" << endl;
-        cout << "Opcion: ";
-        
-        if (!validarEntrada(opcion)) {
-            cout << "Error: Ingrese un numero valido" << endl;
-            continue;
+        cout << "\n========================================" << endl;
+        cout << "       CALCULO DE ALTURA RECURSIVA      " << endl;
+        cout << "========================================" << endl;
+        cout << " 1. [ + ] Insertar Numero" << endl;
+        cout << " 2. [ V ] Ver Estructura" << endl;
+        cout << " 3. [ H ] Calcular Altura del Arbol" << endl;
+        cout << " 4. [ X ] Salir" << endl;
+        cout << "----------------------------------------" << endl;
+        cout << " >> Seleccione: ";
+        op = leerEntero();
+
+        switch(op) {
+            case 1:
+                cout << " > Valor: ";
+                t.insertar(leerEntero());
+                break;
+            case 2:
+                if (!t.raiz) cout << "Arbol vacio." << endl;
+                else t.mostrarEstructura(t.raiz, 0);
+                break;
+            case 3:
+                cout << "\n >> La altura del arbol es: " << t.calcularAltura(t.raiz) << " niveles." << endl;
+                break;
         }
-        
-        switch(opcion) {
-            case 1: {
-                int valor;
-                cout << "Ingrese valor a insertar: ";
-                if (!validarEntrada(valor)) {
-                    cout << "Error: Ingrese un numero valido" << endl;
-                    break;
-                }
-                insertar(valor);
-                break;
-            }
-            
-            case 2: {
-                if (raiz == -1) {
-                    cout << "Arbol vacio. Altura = -1" << endl;
-                } else {
-                    int altura = calcularAltura(raiz);
-                    cout << "\n=== RESULTADO ===" << endl;
-                    cout << "Altura del arbol: " << altura << endl;
-                    cout << "Numero de nodos: " << contarNodos(raiz) << endl;
-                    cout << "Distancia maxima raiz-hoja: " << altura << " aristas" << endl;
-                }
-                break;
-            }
-            
-            case 3: {
-                if (raiz == -1) {
-                    cout << "Arbol vacio. Altura = -1" << endl;
-                } else {
-                    cout << "\n=== PROCESO RECURSIVO ===" << endl;
-                    int altura = calcularAlturaConProceso(raiz, 0);
-                    cout << "\n=== RESULTADO FINAL ===" << endl;
-                    cout << "Altura del arbol: " << altura << endl;
-                }
-                break;
-            }
-            
-            case 4: {
-                if (raiz == -1) {
-                    cout << "Arbol vacio" << endl;
-                } else {
-                    cout << "\n=== ESTRUCTURA DEL ARBOL ===" << endl;
-                    imprimirArbol(raiz, "", true);
-                    cout << "\nNodos: " << contarNodos(raiz) << endl;
-                    cout << "Altura: " << calcularAltura(raiz) << endl;
-                }
-                break;
-            }
-            
-            case 5: {
-                // Limpiar arbol actual
-                numNodos = 0;
-                raiz = -1;
-                
-                cout << "\nCreando arbol de ejemplo..." << endl;
-                cout << "Insertando: 50, 30, 70, 20, 40, 60, 80, 10, 25" << endl;
-                cout << "\n";
-                
-                int ejemplo[] = {50, 30, 70, 20, 40, 60, 80, 10, 25};
-                for (int i = 0; i < 9; i++) {
-                    insertar(ejemplo[i]);
-                }
-                
-                cout << "\n=== ARBOL GENERADO ===" << endl;
-                imprimirArbol(raiz, "", true);
-                
-                int altura = calcularAltura(raiz);
-                cout << "\nAltura del arbol: " << altura << endl;
-                break;
-            }
-            
-            case 0:
-                cout << "Saliendo..." << endl;
-                break;
-                
-            default:
-                cout << "Opcion invalida" << endl;
-        }
-        
-    } while (opcion != 0);
-    
-    cout << "\n================================================" << endl;
-    cout << "DEFINICION DE ALTURA:" << endl;
-    cout << "- Arbol vacio: altura = -1" << endl;
-    cout << "- Nodo hoja: altura = 0" << endl;
-    cout << "- Nodo interno: altura = 1 + max(altura_izq, altura_der)" << endl;
-    cout << "- La altura es el numero de ARISTAS en el camino mas largo" << endl;
-    cout << "================================================" << endl;
-    
+    } while (op != 4);
+
     return 0;
 }

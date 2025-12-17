@@ -1,73 +1,90 @@
-// EJERCICIO 6
 #include <iostream>
+#include <limits>
+#include <string>
+
 using namespace std;
 
+// --- FUNCION DE VALIDACION ---
+// Evita que el programa se rompa si se ingresan letras o simbolos
+template <typename T>
+T leerDato(string mensaje) {
+    T valor;
+    while (true) {
+        cout << mensaje;
+        if (cin >> valor) {
+            return valor;
+        } else {
+            cout << " [!] Error: Entrada no valida. Intente de nuevo.\n";
+            cin.clear(); // Limpia el error
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Descarta el buffer
+        }
+    }
+}
+
+void mostrarCabecera() {
+    cout << "============================================" << endl;
+    cout << "       CALCULADORA DE ESPACIO (HASH)        " << endl;
+    cout << "============================================" << endl;
+}
+
 int main() {
-    int hc; // Tamaño de la tabla
+    int hc;            // Tamaño de la tabla
     float factorCarga;
     int tipoClave;
     
-    cout << "=== CALCULADORA DE ESPACIO ===\n\n";
+    mostrarCabecera();
     
-    // Entrada de datos
-    cout << "Tamanio de la tabla (hc): ";
-    cin >> hc;
+    // Entrada de datos con validacion
+    hc = leerDato<int>(" > Tamanio de la tabla (hc): ");
+    factorCarga = leerDato<float>(" > Factor de carga (0.25, 0.5, 1.0, 2.0): ");
     
-    cout << "Factor de carga (0.25, 0.5, 1.0, 2.0): ";
-    cin >> factorCarga;
+    cout << "\n--- TIPO DE CLAVE ---" << endl;
+    cout << " 1 = Clave de 1 palabra (nodo = 2 palabras)" << endl;
+    cout << " 2 = Clave de 4 palabras (nodo = 5 palabras)" << endl;
+    tipoClave = leerDato<int>(" > Seleccione opcion (1 o 2): ");
     
-    cout << "Tipo de clave:\n";
-    cout << "1 = Clave de 1 palabra (nodo=2 palabras)\n";
-    cout << "2 = Clave de 4 palabras (nodo=5 palabras)\n";
-    cout << "Opcion: ";
-    cin >> tipoClave;
+    // --- CALCULO LOGICO ---
+    // n = factor_carga * hc
+    int n = (int)(factorCarga * hc);
     
-    // Calcular número de claves
-    int n = factorCarga * hc;
+    cout << "\n" << string(44, '=') << endl;
+    cout << "          RESULTADOS DEL ANALISIS           " << endl;
+    cout << string(44, '=') << endl;
+    cout << " Numero de claves (n): " << n << endl;
     
-    cout << "\n========== RESULTADOS ==========\n";
-    cout << "Numero de claves (n): " << n << "\n\n";
+    // --- DIRECCIONAMIENTO CERRADO ---
+    cout << "\n[1] DIRECCIONAMIENTO CERRADO" << endl;
+    cout << "--------------------------------------------" << endl;
     
-    // DIRECCIONAMIENTO CERRADO
-    cout << "--- DIRECCIONAMIENTO CERRADO ---\n";
-    
-    int espacioTabla = hc;
+    int espacioTabla = hc; // 1 palabra por entrada de tabla (puntero)
     int espacioListas;
-    int totalCerrado;
+    int palabrasPorNodo = (tipoClave == 1) ? 2 : 5;
     
-    if(tipoClave == 1) {
-        espacioListas = n * 2; // cada nodo = 2 palabras
-        cout << "Espacio tabla: " << hc << " palabras\n";
-        cout << "Espacio listas: " << n << " nodos x 2 = " << espacioListas << " palabras\n";
-    } else {
-        espacioListas = n * 5; // cada nodo = 5 palabras
-        cout << "Espacio tabla: " << hc << " palabras\n";
-        cout << "Espacio listas: " << n << " nodos x 5 = " << espacioListas << " palabras\n";
-    }
+    espacioListas = n * palabrasPorNodo;
+    int totalCerrado = espacioTabla + espacioListas;
     
-    totalCerrado = espacioTabla + espacioListas;
-    cout << "TOTAL CERRADO: " << totalCerrado << " palabras\n";
+    cout << " + Espacio tabla (punteros): " << hc << " palabras" << endl;
+    cout << " + Espacio nodos: " << n << " x " << palabrasPorNodo << " = " << espacioListas << " palabras" << endl;
+    cout << " >> TOTAL CERRADO: " << totalCerrado << " palabras" << endl;
     
-    // DIRECCIONAMIENTO ABIERTO
-    cout << "\n--- DIRECCIONAMIENTO ABIERTO ---\n";
-    cout << "Usando el mismo espacio: " << totalCerrado << " palabras\n";
+    // --- DIRECCIONAMIENTO ABIERTO ---
+    cout << "\n[2] DIRECCIONAMIENTO ABIERTO" << endl;
+    cout << "--------------------------------------------" << endl;
+    cout << " * Usando el mismo espacio total: " << totalCerrado << " palabras" << endl;
     
-    int capacidadAbierto;
-    float factorCargaAbierto;
+    int palabrasPorClave = (tipoClave == 1) ? 1 : 4;
+    int capacidadAbierto = totalCerrado / palabrasPorClave;
+    float factorCargaAbierto = (float)n / capacidadAbierto;
     
-    if(tipoClave == 1) {
-        capacidadAbierto = totalCerrado; // 1 palabra por clave
-        cout << "Capacidad: " << totalCerrado << " / 1 = " << capacidadAbierto << " claves\n";
-    } else {
-        capacidadAbierto = totalCerrado / 4; // 4 palabras por clave
-        cout << "Capacidad: " << totalCerrado << " / 4 = " << capacidadAbierto << " claves\n";
-    }
+    cout << " + Capacidad max: " << totalCerrado << " / " << palabrasPorClave << " = " << capacidadAbierto << " claves" << endl;
+    cout << " >> NUEVO FACTOR DE CARGA: " << factorCargaAbierto << endl;
     
-    factorCargaAbierto = (float)n / capacidadAbierto;
-    cout << "Factor de carga: " << n << " / " << capacidadAbierto << " = " << factorCargaAbierto << "\n";
-    
-    cout << "\n========== RESUMEN ==========\n";
-    cout << "Factor cerrado: " << factorCarga << " -> Factor abierto: " << factorCargaAbierto << "\n";
-    
+    // --- RESUMEN FINAL ---
+    cout << "\n" << string(44, '-') << endl;
+    cout << " RESUMEN: Para " << n << " claves..." << endl;
+    cout << " En Cerrado (alpha=" << factorCarga << ") ocupas " << totalCerrado << " palabras." << endl;
+    cout << " En Abierto con ese espacio, el alpha baja a: " << factorCargaAbierto << endl;
+    cout << string(44, '=') << endl;
+
     return 0;
 }

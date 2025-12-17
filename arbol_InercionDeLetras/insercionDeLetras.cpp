@@ -1,247 +1,293 @@
 #include <iostream>
-#include <iomanip>
+#include <cstdlib>
 using namespace std;
 
-const int MAX_NODOS = 50;
-const bool ROJO = true;
-const bool NEGRO = false;
-
-// Arrays paralelos para simular nodos
-char claves[MAX_NODOS];
-bool colores[MAX_NODOS];
-int izq[MAX_NODOS];
-int der[MAX_NODOS];
-int padre[MAX_NODOS];
-int numNodos = 0;
-int raiz = -1;
-
-// Función para crear un nuevo nodo
-int crearNodo(char clave, bool color, int p) {
-    if (numNodos >= MAX_NODOS) {
-        cout << "Error: Arbol lleno" << endl;
-        return -1;
+// Clase Nodo para el arbol rojinegro
+class Nodo {
+public:
+    char dato;
+    bool esRojo;
+    Nodo* izq;
+    Nodo* der;
+    Nodo* padre;
+    
+    Nodo(char valor) {
+        dato = valor;
+        esRojo = true;
+        izq = NULL;
+        der = NULL;
+        padre = NULL;
     }
-    int idx = numNodos++;
-    claves[idx] = clave;
-    colores[idx] = color;
-    izq[idx] = -1;
-    der[idx] = -1;
-    padre[idx] = p;
-    return idx;
-}
+};
 
-// Obtener color de un nodo (negro si es null)
-bool obtenerColor(int nodo) {
-    return (nodo == -1) ? NEGRO : colores[nodo];
-}
-
-// Rotación izquierda
-void rotarIzq(int x) {
-    if (x == -1 || der[x] == -1) return;
+// Clase ArbolRojinegro
+class ArbolRojinegro {
+private:
+    Nodo* raiz;
     
-    int y = der[x];
-    der[x] = izq[y];
-    
-    if (izq[y] != -1) {
-        padre[izq[y]] = x;
-    }
-    
-    padre[y] = padre[x];
-    
-    if (padre[x] == -1) {
-        raiz = y;
-    } else if (x == izq[padre[x]]) {
-        izq[padre[x]] = y;
-    } else {
-        der[padre[x]] = y;
-    }
-    
-    izq[y] = x;
-    padre[x] = y;
-}
-
-// Rotación derecha
-void rotarDer(int y) {
-    if (y == -1 || izq[y] == -1) return;
-    
-    int x = izq[y];
-    izq[y] = der[x];
-    
-    if (der[x] != -1) {
-        padre[der[x]] = y;
-    }
-    
-    padre[x] = padre[y];
-    
-    if (padre[y] == -1) {
-        raiz = x;
-    } else if (y == der[padre[y]]) {
-        der[padre[y]] = x;
-    } else {
-        izq[padre[y]] = x;
-    }
-    
-    der[x] = y;
-    padre[y] = x;
-}
-
-// Balancear después de inserción
-void balancearInsercion(int k) {
-    while (k != raiz && obtenerColor(padre[k]) == ROJO) {
-        int p = padre[k];
-        int abuelo = padre[p];
+    // Rotacion izquierda
+    void rotarIzquierda(Nodo* x) {
+        Nodo* y = x->der;
+        x->der = y->izq;
         
-        if (abuelo == -1) break;
+        if (y->izq != NULL)
+            y->izq->padre = x;
         
-        if (p == izq[abuelo]) {
-            int tio = der[abuelo];
-            
-            if (obtenerColor(tio) == ROJO) {
-                // Caso 1: Tío rojo
-                colores[p] = NEGRO;
-                colores[tio] = NEGRO;
-                colores[abuelo] = ROJO;
-                k = abuelo;
-            } else {
-                if (k == der[p]) {
-                    // Caso 2: Nodo es hijo derecho
-                    k = p;
-                    rotarIzq(k);
-                    p = padre[k];
-                    abuelo = padre[p];
+        y->padre = x->padre;
+        
+        if (x->padre == NULL)
+            raiz = y;
+        else if (x == x->padre->izq)
+            x->padre->izq = y;
+        else
+            x->padre->der = y;
+        
+        y->izq = x;
+        x->padre = y;
+    }
+    
+    // Rotacion derecha
+    void rotarDerecha(Nodo* y) {
+        Nodo* x = y->izq;
+        y->izq = x->der;
+        
+        if (x->der != NULL)
+            x->der->padre = y;
+        
+        x->padre = y->padre;
+        
+        if (y->padre == NULL)
+            raiz = x;
+        else if (y == y->padre->der)
+            y->padre->der = x;
+        else
+            y->padre->izq = x;
+        
+        x->der = y;
+        y->padre = x;
+    }
+    
+    // Corregir violaciones despues de insertar
+    void corregirInsercion(Nodo* k) {
+        while (k->padre != NULL && k->padre->esRojo) {
+            if (k->padre == k->padre->padre->izq) {
+                Nodo* tio = k->padre->padre->der;
+                
+                // Caso 1: El tio es rojo
+                if (tio != NULL && tio->esRojo) {
+                    k->padre->esRojo = false;
+                    tio->esRojo = false;
+                    k->padre->padre->esRojo = true;
+                    k = k->padre->padre;
+                } else {
+                    // Caso 2: El tio es negro y k es hijo derecho
+                    if (k == k->padre->der) {
+                        k = k->padre;
+                        rotarIzquierda(k);
+                    }
+                    // Caso 3: El tio es negro y k es hijo izquierdo
+                    k->padre->esRojo = false;
+                    k->padre->padre->esRojo = true;
+                    rotarDerecha(k->padre->padre);
                 }
-                // Caso 3: Nodo es hijo izquierdo
-                colores[p] = NEGRO;
-                if (abuelo != -1) {
-                    colores[abuelo] = ROJO;
-                    rotarDer(abuelo);
+            } else {
+                Nodo* tio = k->padre->padre->izq;
+                
+                // Caso 1: El tio es rojo
+                if (tio != NULL && tio->esRojo) {
+                    k->padre->esRojo = false;
+                    tio->esRojo = false;
+                    k->padre->padre->esRojo = true;
+                    k = k->padre->padre;
+                } else {
+                    // Caso 2: El tio es negro y k es hijo izquierdo
+                    if (k == k->padre->izq) {
+                        k = k->padre;
+                        rotarDerecha(k);
+                    }
+                    // Caso 3: El tio es negro y k es hijo derecho
+                    k->padre->esRojo = false;
+                    k->padre->padre->esRojo = true;
+                    rotarIzquierda(k->padre->padre);
                 }
             }
-        } else {
-            int tio = izq[abuelo];
             
-            if (obtenerColor(tio) == ROJO) {
-                // Caso 1: Tío rojo
-                colores[p] = NEGRO;
-                colores[tio] = NEGRO;
-                colores[abuelo] = ROJO;
-                k = abuelo;
-            } else {
-                if (k == izq[p]) {
-                    // Caso 2: Nodo es hijo izquierdo
-                    k = p;
-                    rotarDer(k);
-                    p = padre[k];
-                    abuelo = padre[p];
-                }
-                // Caso 3: Nodo es hijo derecho
-                colores[p] = NEGRO;
-                if (abuelo != -1) {
-                    colores[abuelo] = ROJO;
-                    rotarIzq(abuelo);
-                }
-            }
+            if (k == raiz)
+                break;
         }
-    }
-    colores[raiz] = NEGRO;
-}
-
-// Insertar nodo
-void insertar(char clave) {
-    int z = crearNodo(clave, ROJO, -1);
-    if (z == -1) return;
-    
-    cout << "\n--- Insertando: " << clave << " ---" << endl;
-    
-    if (raiz == -1) {
-        raiz = z;
-        colores[raiz] = NEGRO;
-        cout << "Primera insercion - raiz es " << clave << " (NEGRO)" << endl;
-        return;
+        raiz->esRojo = false;
     }
     
-    int actual = raiz;
-    int padreActual = -1;
+    // Funcion auxiliar para imprimir
+    void imprimirAuxiliar(Nodo* nodo, int nivel, char prefijo) {
+        if (nodo == NULL)
+            return;
+        
+        imprimirAuxiliar(nodo->der, nivel + 1, '/');
+        
+        for (int i = 0; i < nivel; i++)
+            cout << "    ";
+        
+        if (nivel > 0)
+            cout << prefijo << "---";
+        
+        cout << nodo->dato;
+        if (nodo->esRojo)
+            cout << "(R)";
+        else
+            cout << "(N)";
+        cout << endl;
+        
+        imprimirAuxiliar(nodo->izq, nivel + 1, '\\');
+    }
     
-    while (actual != -1) {
-        padreActual = actual;
-        if (clave < claves[actual]) {
-            actual = izq[actual];
-        } else if (clave > claves[actual]) {
-            actual = der[actual];
+public:
+    ArbolRojinegro() {
+        raiz = NULL;
+    }
+    
+    // Insertar nodo
+    void insertar(char dato) {
+        Nodo* nuevoNodo = new Nodo(dato);
+        
+        Nodo* padre = NULL;
+        Nodo* actual = raiz;
+        
+        // Buscar posicion para insertar
+        while (actual != NULL) {
+            padre = actual;
+            if (nuevoNodo->dato < actual->dato)
+                actual = actual->izq;
+            else
+                actual = actual->der;
+        }
+        
+        nuevoNodo->padre = padre;
+        
+        if (padre == NULL) {
+            raiz = nuevoNodo;
+        } else if (nuevoNodo->dato < padre->dato) {
+            padre->izq = nuevoNodo;
         } else {
-            numNodos--;
-            cout << "Clave duplicada, no se inserta" << endl;
+            padre->der = nuevoNodo;
+        }
+        
+        // Si es la raiz, colorear de negro
+        if (nuevoNodo->padre == NULL) {
+            nuevoNodo->esRojo = false;
             return;
         }
+        
+        // Si el abuelo es NULL, retornar
+        if (nuevoNodo->padre->padre == NULL)
+            return;
+        
+        // Corregir el arbol
+        corregirInsercion(nuevoNodo);
     }
     
-    padre[z] = padreActual;
-    if (clave < claves[padreActual]) {
-        izq[padreActual] = z;
-        cout << clave << " insertado como hijo IZQ de " << claves[padreActual] << " (ROJO)" << endl;
-    } else {
-        der[padreActual] = z;
-        cout << clave << " insertado como hijo DER de " << claves[padreActual] << " (ROJO)" << endl;
+    // Imprimir arbol
+    void imprimir() {
+        if (raiz == NULL) {
+            cout << "El arbol esta vacio." << endl;
+            return;
+        }
+        cout << "\nVisualizacion del arbol (R=Rojo, N=Negro):\n" << endl;
+        imprimirAuxiliar(raiz, 0, ' ');
+        cout << endl;
     }
     
-    if (obtenerColor(padreActual) == ROJO) {
-        cout << "Conflicto ROJO-ROJO detectado, balanceando..." << endl;
-        balancearInsercion(z);
+    // Verificar si existe un nodo
+    bool existe(char dato) {
+        Nodo* actual = raiz;
+        while (actual != NULL) {
+            if (dato == actual->dato)
+                return true;
+            if (dato < actual->dato)
+                actual = actual->izq;
+            else
+                actual = actual->der;
+        }
+        return false;
     }
-}
+};
 
-// Imprimir árbol visual con ASCII simple
-void imprimirArbol(int nodo, string prefijo, bool esUltimo) {
-    if (nodo == -1) return;
+// Funcion para validar entrada numerica
+int leerOpcion() {
+    char entrada[100];
+    cin >> entrada;
     
-    cout << prefijo;
-    
-    if (esUltimo) {
-        cout << "+-- ";
-        prefijo += "    ";
-    } else {
-        cout << "+-- ";
-        prefijo += "|   ";
+    // Verificar que solo contiene digitos
+    for (int i = 0; entrada[i] != '\0'; i++) {
+        if (entrada[i] < '0' || entrada[i] > '9') {
+            return -1;
+        }
     }
     
-    cout << claves[nodo] << (colores[nodo] == ROJO ? "(R)" : "(N)") << endl;
-    
-    // Contar hijos existentes
-    bool tieneIzq = (izq[nodo] != -1);
-    bool tieneDer = (der[nodo] != -1);
-    
-    if (tieneIzq) {
-        imprimirArbol(izq[nodo], prefijo, !tieneDer);
-    }
-    if (tieneDer) {
-        imprimirArbol(der[nodo], prefijo, true);
-    }
+    return atoi(entrada);
 }
 
 int main() {
-    cout << "=== ARBOL ROJO-NEGRO: INSERCION DE A HASTA K ===" << endl;
-    cout << "================================================" << endl;
+    ArbolRojinegro arbol;
+    char siguienteLetra = 'A';
+    int opcion;
     
-    // Insertar letras de A a K
-    for (char c = 'A'; c <= 'K'; c++) {
-        insertar(c);
+    cout << "\n========================================" << endl;
+    cout << "   ARBOL ROJINEGRO - INSERCION A-K" << endl;
+    cout << "========================================\n" << endl;
+    
+    while (siguienteLetra <= 'K') {
+        cout << "\n--- Menu Principal ---" << endl;
+        cout << "Siguiente letra a insertar: " << siguienteLetra << endl;
+        cout << "\n1. Insertar letra " << siguienteLetra << endl;
+        cout << "2. Visualizar arbol" << endl;
+        cout << "3. Salir" << endl;
+        cout << "\nIngrese opcion: ";
         
-        cout << "\nArbol actual:" << endl;
-        imprimirArbol(raiz, "", true);
-        cout << "------------------------------------------------" << endl;
+        opcion = leerOpcion();
+        
+        if (opcion == -1) {
+            cout << "\nError: Ingrese solo numeros." << endl;
+            continue;
+        }
+        
+        switch (opcion) {
+            case 1: {
+                cout << "\nInsertando letra " << siguienteLetra << "..." << endl;
+                arbol.insertar(siguienteLetra);
+                cout << "Letra " << siguienteLetra << " insertada correctamente." << endl;
+                
+                // Mostrar arbol despues de insertar
+                arbol.imprimir();
+                
+                siguienteLetra++;
+                
+                if (siguienteLetra > 'K') {
+                    cout << "\n¡Todas las letras de A a K han sido insertadas!" << endl;
+                    cout << "\nArbol final:" << endl;
+                    arbol.imprimir();
+                    
+                    cout << "\nCONCLUSION:" << endl;
+                    cout << "Cuando las claves se insertan en orden ascendente en un" << endl;
+                    cout << "arbol rojinegro, el arbol se autobalancea mediante rotaciones" << endl;
+                    cout << "y recoloreos para mantener sus propiedades:" << endl;
+                    cout << "1. La raiz siempre es negra" << endl;
+                    cout << "2. No puede haber dos nodos rojos consecutivos" << endl;
+                    cout << "3. Todos los caminos tienen la misma cantidad de nodos negros" << endl;
+                    cout << "Esto previene la degeneracion en una lista enlazada." << endl;
+                }
+                break;
+            }
+            case 2:
+                arbol.imprimir();
+                break;
+            case 3:
+                cout << "\nSaliendo del programa..." << endl;
+                return 0;
+            default:
+                cout << "\nOpcion invalida. Ingrese 1, 2 o 3." << endl;
+        }
     }
-    
-    cout << "\n=== ANALISIS GENERAL ===" << endl;
-    cout << "\nAl insertar claves en ORDEN ASCENDENTE en un arbol rojo-negro:" << endl;
-    cout << "1. Sin balanceo, se formaria una lista enlazada (peor caso O(n))" << endl;
-    cout << "2. El arbol rojo-negro realiza ROTACIONES y RECOLOREOS automaticos" << endl;
-    cout << "3. Mantiene altura balanceada: h <= 2*log2(n+1)" << endl;
-    cout << "4. Cada insercion puede causar hasta O(log n) rotaciones" << endl;
-    cout << "5. Resultado: arbol balanceado con busqueda O(log n)" << endl;
-    
-    cout << "\n=== ARBOL FINAL ===" << endl;
-    imprimirArbol(raiz, "", true);
     
     return 0;
 }
